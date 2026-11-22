@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  PROVIDER
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  REQUIRES_PAYMENT
+  PAID
+  REFUNDED
+  FAILED
+}
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  passwordHash    String
+  name            String
+  role            Role      @default(CUSTOMER)
+  emailVerifiedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  providerProfile ProviderProfile?
+  bookings        Booking[]
+  reviews         Review[]
+  refreshTokens   RefreshToken[]
+}
+
+// Only a hash of the refresh token is stored, never the token itself.
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model ProviderProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  bio       String?
+  city      String?
+  createdAt DateTime @default(now())
+
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  services     Service[]
+  availability AvailabilityRule[]
+  bookings     Booking[]
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  providerId  String
+  title       String
+  description String?
+  priceCents  Int
+  currency    String   @default("usd")
+  durationMin Int
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  provider ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@index([providerId])
+}
+
+// Weekly working hours. dayOfWeek: 0 = Sunday ... 6 = Saturday. Minutes since midnight.
+model AvailabilityRule {
+  id          String @id @default(uuid())
+  providerId  String
+  dayOfWeek   Int
+  startMinute Int
+  endMinute   Int
+
+  provider ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId, dayOfWeek])
+}
+
+// Double-booking protection (week 3): add a partial unique index in a SQL migration:
+//   CREATE UNIQUE INDEX booking_active_slot ON "Booking" ("providerId", "startsAt")
+//   WHERE status IN ('PENDING', 'CONFIRMED');
+// Prisma cannot express partial indexes, so it lives in a hand-written migration.
+model Booking {
+  id         String        @id @default(uuid())
+  customerId String
+  providerId String
+  serviceId  String
+  startsAt   DateTime
+  endsAt     DateTime
+  status     BookingStatus @default(PENDING)
+  expiresAt  DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  customer User            @relation(fields: [customerId], references: [id])
+  provider ProviderProfile @relation(fields: [providerId], references: [id])
+  service  Service         @relation(fields: [serviceId], references: [id])
+  payment  Payment?
+  review   Review?
+
+  @@index([providerId, startsAt])
+  @@index([customerId])
+}
+
+model Payment {
+  id                    String        @id @default(uuid())
+  bookingId             String        @unique
+  stripeSessionId       String?       @unique
+  stripePaymentIntentId String?
+  amountCents           Int
+  currency              String        @default("usd")
+  status                PaymentStatus @default(REQUIRES_PAYMENT)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+}
+
+// Stripe event ids already handled, so webhook replays are ignored (idempotency).
+model StripeEvent {
+  id          String   @id
+  processedAt DateTime @default(now())
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  bookingId String   @unique
+  authorId  String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  actorId   String?
+  entity    String
+  entityId  String
+  action    String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+}
