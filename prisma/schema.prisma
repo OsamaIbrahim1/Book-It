@@ -63,6 +63,8 @@ model ProviderProfile {
   userId    String   @unique
   bio       String?
   city      String?
+  // IANA time zone. Availability windows are wall-clock times in this zone.
+  timezone  String   @default("Africa/Cairo")
   createdAt DateTime @default(now())
 
   user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -86,9 +88,10 @@ model Service {
   bookings Booking[]
 
   @@index([providerId])
+  @@index([active, createdAt])
 }
 
-// Weekly working hours. dayOfWeek: 0 = Sunday ... 6 = Saturday. Minutes since midnight.
+// Weekly working hours. dayOfWeek: 0 = Sunday ... 6 = Saturday. Minutes since midnight (provider time zone).
 model AvailabilityRule {
   id          String @id @default(uuid())
   providerId  String

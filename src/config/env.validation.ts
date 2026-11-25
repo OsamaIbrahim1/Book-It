@@ -2,11 +2,15 @@ export interface Env {
   NODE_ENV: string;
   PORT: number;
   DATABASE_URL: string;
+  REDIS_URL: string;
   JWT_ACCESS_SECRET: string;
   JWT_REFRESH_SECRET: string;
   ACCESS_TTL_SECONDS: number;
   REFRESH_TTL_SECONDS: number;
   CORS_ORIGINS: string;
+  STRIPE_SECRET_KEY: string;
+  STRIPE_WEBHOOK_SECRET: string;
+  FRONTEND_URL: string;
 }
 
 function required(raw: Record<string, unknown>, key: string): string {
@@ -41,10 +45,22 @@ export function validateEnv(raw: Record<string, unknown>): Env {
     NODE_ENV: typeof raw.NODE_ENV === 'string' ? raw.NODE_ENV : 'development',
     PORT: numberOr(raw, 'PORT', 3000),
     DATABASE_URL: required(raw, 'DATABASE_URL'),
+    // Redis is optional at runtime: if it is down, the API still works without caching.
+    REDIS_URL:
+      typeof raw.REDIS_URL === 'string' && raw.REDIS_URL.length > 0
+        ? raw.REDIS_URL
+        : 'redis://localhost:6379',
     JWT_ACCESS_SECRET: accessSecret,
     JWT_REFRESH_SECRET: refreshSecret,
     ACCESS_TTL_SECONDS: numberOr(raw, 'ACCESS_TTL_SECONDS', 900),
     REFRESH_TTL_SECONDS: numberOr(raw, 'REFRESH_TTL_SECONDS', 1209600),
     CORS_ORIGINS: typeof raw.CORS_ORIGINS === 'string' ? raw.CORS_ORIGINS : '',
+    // Stripe is optional: without keys, checkout and webhook answer 503 and everything else works.
+    STRIPE_SECRET_KEY: typeof raw.STRIPE_SECRET_KEY === 'string' ? raw.STRIPE_SECRET_KEY : '',
+    STRIPE_WEBHOOK_SECRET: typeof raw.STRIPE_WEBHOOK_SECRET === 'string' ? raw.STRIPE_WEBHOOK_SECRET : '',
+    FRONTEND_URL:
+      typeof raw.FRONTEND_URL === 'string' && raw.FRONTEND_URL.length > 0
+        ? raw.FRONTEND_URL
+        : 'http://localhost:3001',
   };
 }

@@ -1,12 +1,13 @@
 services:
   db:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: bookit
       POSTGRES_PASSWORD: bookit
       POSTGRES_DB: bookit
     ports:
-      - '5433:5432'
+      - '15432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -15,9 +16,9 @@ services:
       timeout: 5s
       retries: 10
 
-  # Not used yet: reserved for rate-limit storage, caching and BullMQ jobs (week 2-3).
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     ports:
       - '6379:6379'
     healthcheck:
@@ -37,6 +38,7 @@ services:
       NODE_ENV: production
       PORT: 3000
       DATABASE_URL: postgresql://bookit:bookit@db:5432/bookit?schema=public
+      REDIS_URL: redis://redis:6379
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set JWT_ACCESS_SECRET in .env}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set JWT_REFRESH_SECRET in .env}
       ACCESS_TTL_SECONDS: ${ACCESS_TTL_SECONDS:-900}
