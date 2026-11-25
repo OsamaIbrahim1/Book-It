@@ -8,6 +8,16 @@ Booking marketplace. Customers book time slots with service providers (technicia
 
 ## Highlights
 
+## Screenshots
+
+| Search services | Pick a time |
+|---|---|
+| ![Search](docs/search.png) | ![Pick a time](docs/slots.png) |
+
+| Stripe checkout | Provider dashboard |
+|---|---|
+| ![Checkout](docs/checkout.png) | ![Provider dashboard](docs/provider.png) |
+
 - **No double bookings:** a row lock per provider inside a transaction, plus a PostgreSQL exclusion constraint as a last line of defense.
 - **Idempotent Stripe webhook:** signature check on the raw body, event ids stored and handled in one transaction, late payments refunded automatically.
 - **Time zones done right:** availability is wall-clock time in the provider's zone, slots are UTC, daylight saving is covered by tests.
