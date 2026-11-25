@@ -11,7 +11,7 @@ Booking marketplace. Customers book time slots with service providers (technicia
 - **Time zones done right:** availability is wall-clock time in the provider's zone, slots are UTC, daylight saving is covered by tests.
 - **Resilient background work:** BullMQ jobs expire unpaid holds and send reminders; if Redis is down the API keeps working.
 - **Secure auth:** argon2, short-lived JWT access tokens, rotating refresh tokens with reuse detection.
-- **67 unit tests** and CI (lint, test, build) for the API and the web app.
+- **Unit and end-to-end tests** (concurrency, webhook replay, constraint) and CI (lint, test, build) for the API and the web app.
 
 ## Stack
 
@@ -99,9 +99,12 @@ See [web/README.md](web/README.md). For payments, also run `stripe listen --even
 ## Tests
 
 ```bash
-npm test
+npm test             # unit tests (mocked database)
+npm run test:e2e     # end-to-end: real HTTP + real PostgreSQL (database "bookit_test", created automatically)
 npm run test:cov
 ```
+
+The e2e suite proves the important guarantees: 10 simultaneous requests for one slot produce exactly one booking, the database constraint rejects overlaps on its own, expired holds free their slot, the Stripe webhook confirms a booking once and ignores replays, and a reused refresh token revokes the session.
 
 ## Roadmap
 

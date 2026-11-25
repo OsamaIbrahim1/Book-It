@@ -27,3 +27,11 @@ The API must run on `NEXT_PUBLIC_API_URL` (default `http://localhost:3000`) and 
 - Access tokens refresh automatically on a 401; parallel requests share one refresh call because refresh tokens work only once.
 - The Stripe redirect is not trusted: the booking page waits for the status to become `CONFIRMED`.
 - Tokens are kept in `localStorage` to keep the demo simple. For production, use httpOnly cookies set by the API.
+
+## Screenshots
+
+| Search | Pick a time |
+|---|---|
+| ![Search](docs/search.png) | ![Slots](docs/slots.png) |
+| **Stripe checkout** | **Provider dashboard** |
+| ![Checkout](docs/checkout.png) | ![Provider](docs/provider.png) |

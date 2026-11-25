@@ -12,7 +12,12 @@ jobs:
       DATABASE_URL: postgresql://bookit:bookit@localhost:5432/bookit?schema=public
       JWT_ACCESS_SECRET: ci-access-secret-ci-access-secret-ci
       JWT_REFRESH_SECRET: ci-refresh-secret-ci-refresh-secret-ci
+      REDIS_URL: redis://localhost:6379
     services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
       postgres:
         image: postgres:16-alpine
         env:
@@ -36,6 +41,7 @@ jobs:
       - run: npx prisma generate
       - run: npm run lint
       - run: npm test
+      - run: npm run test:e2e
       - run: npm run build
 
   web:
