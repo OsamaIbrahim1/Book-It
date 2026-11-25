@@ -1,12 +1,11 @@
 # BookIt
+![CI](https://github.com/OsamaIbrahim1/Book-It/actions/workflows/ci.yml/badge.svg)
 
 Booking marketplace. Customers book time slots with service providers (technicians, tutors, barbers) and pay online with Stripe.
 
 **Status:** API complete (auth, RBAC, availability and slots, bookings with double-booking protection, Stripe payments, background jobs) and a Next.js frontend for customers and providers. Deployment is next.
 
-**Live demo:** _add the Vercel URL here after deploying_ (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)). The API runs on a free plan that sleeps when idle, so the first request can take about a minute.
-
-## Highlights
+**Demo:** screenshots below, and a short walkthrough video: _coming soon_
 
 ## Screenshots
 
@@ -17,6 +16,8 @@ Booking marketplace. Customers book time slots with service providers (technicia
 | Stripe checkout | Provider dashboard |
 |---|---|
 | ![Checkout](docs/checkout.png) | ![Provider dashboard](docs/provider.png) |
+
+## Highlights
 
 - **No double bookings:** a row lock per provider inside a transaction, plus a PostgreSQL exclusion constraint as a last line of defense.
 - **Idempotent Stripe webhook:** signature check on the raw body, event ids stored and handled in one transaction, late payments refunded automatically.
